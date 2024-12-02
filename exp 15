@@ -1,0 +1,29 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/stat.h>
+#include <string.h>
+
+void createDirectory(const char *dirName) {
+    if (mkdir(dirName, 0777) == -1) {
+        perror("Error creating directory");
+    } else {
+        printf("Directory created: %s\n", dirName);
+    }
+}
+
+int main() {
+    const char *mainDir = "MainDirectory";
+    const char *subDir1 = "MainDirectory/SubDirectory1";
+    const char *subDir2 = "MainDirectory/SubDirectory2";
+
+    createDirectory(mainDir);
+    createDirectory(subDir1);
+    createDirectory(subDir2);
+
+    return 0;
+}
+
+output:
+Error creating directory: Permission denied
+Error creating directory: No such file or directory
+Error creating directory: No such file or directory
