@@ -1,0 +1,31 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <dirent.h>
+
+void listFiles(const char *path) {
+    struct dirent *entry;
+    DIR *dp = opendir(path);
+
+    if (dp == NULL) {
+        perror("opendir");
+        return;
+    }
+
+    while ((entry = readdir(dp))) {
+        if (entry->d_name[0] != '.') { // Skip hidden files
+            printf("%s\n", entry->d_name);
+        }
+    }
+    closedir(dp);
+}
+
+int main() {
+    const char *path = ".";
+    printf("Files in directory:\n");
+    listFiles(path);
+    return 0;
+}
+output:
+Files in directory:
+
