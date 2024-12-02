@@ -1,0 +1,46 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#define MAX_EMPLOYEES 100
+#define NAME_LENGTH 50
+
+typedef struct {
+    int id;
+    char name[NAME_LENGTH];
+    float salary;
+} Employee;
+
+void writeEmployee(FILE *file, Employee emp, int index) {
+    fseek(file, index * sizeof(Employee), SEEK_SET);
+    fwrite(&emp, sizeof(Employee), 1, file);
+}
+
+void readEmployee(FILE *file, Employee *emp, int index) {
+    fseek(file, index * sizeof(Employee), SEEK_SET);
+    fread(emp, sizeof(Employee), 1, file);
+}
+
+int main() {
+    FILE *file = fopen("employees.dat", "wb+");
+    if (!file) {
+        perror("Unable to open file");
+        return EXIT_FAILURE;
+    }
+
+    Employee emp1 = {1, "John Doe", 50000.0};
+    Employee emp2 = {2, "Jane Smith", 60000.0};
+
+    writeEmployee(file, emp1, 0);
+    writeEmployee(file, emp2, 1);
+
+    Employee readEmp;
+    readEmployee(file, &readEmp, 0);
+    printf("Employee ID: %d, Name: %s, Salary: %.2f\n", readEmp.id, readEmp.name, readEmp.salary);
+
+    fclose(file);
+    return EXIT_SUCCESS;
+}
+
+output:
+Unable to open file: Permission denied
