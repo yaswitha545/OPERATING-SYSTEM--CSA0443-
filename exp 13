@@ -1,0 +1,43 @@
+#include <stdio.h>
+#include <stdlib.h>
+
+#define MAX_BLOCKS 100
+
+typedef struct {
+    int size;
+    int isFree;
+} Block;
+
+Block memory[MAX_BLOCKS];
+
+void initializeMemory(int totalSize) {
+    memory[0].size = totalSize;
+    memory[0].isFree = 1;
+    for (int i = 1; i < MAX_BLOCKS; i++) {
+        memory[i].size = 0;
+        memory[i].isFree = 0;
+    }
+}
+
+int firstFit(int requestSize) {
+    for (int i = 0; i < MAX_BLOCKS; i++) {
+        if (memory[i].isFree && memory[i].size >= requestSize) {
+            memory[i].isFree = 0; // Allocate memory
+            return i; // Return the index of the allocated block
+        }
+    }
+    return -1; // No suitable block found
+}
+
+int main() {
+    initializeMemory(1000); // Initialize memory with 1000 units
+    int index = firstFit(200); // Request 200 units
+    if (index != -1) {
+        printf("Memory allocated at block index: %d\n", index);
+    } else {
+        printf("Memory allocation failed.\n");
+    }
+    return 0;
+}
+output:
+Memory allocated at block index:0
