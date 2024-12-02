@@ -1,0 +1,24 @@
+#include <stdio.h>
+#include <pthread.h>
+
+void* threadFunction(void* arg) {
+    printf("Thread %d is running.\n", *(int*)arg);
+    return NULL;
+}
+
+int main() {
+    pthread_t threads[2];
+    int threadArgs[2] = {1, 2};
+
+    for (int i = 0; i < 2; i++) {
+        pthread_create(&threads[i], NULL, threadFunction, &threadArgs[i]);
+    }
+    for (int i = 0; i < 2; i++) {
+        pthread_join(threads[i], NULL);
+    }
+    return 0;
+}
+
+output:
+Hello from Thread 1!
+Hello from Thread 2!
