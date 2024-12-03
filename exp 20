@@ -1,0 +1,83 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <pthread.h>
+#include <semaphore.h>
+
+int shared_data = 0;
+int reader_count = 0;
+
+sem_t resource;    
+sem_t read_count_access; 
+void *reader(void *arg) {
+    int reader_id = *(int *)arg;
+
+    sem_wait(&read_count_access); 
+    reader_count++;
+    if (reader_count == 1) {
+        sem_wait(&resource);
+    }
+    sem_post(&read_count_access);
+
+    printf("Reader %d: Read shared data = %d\n", reader_id, shared_data);
+
+    sem_wait(&read_count_access); 
+    reader_count--;
+    if (reader_count == 0) {
+        sem_post(&resource); 
+    }
+    sem_post(&read_count_access);
+
+    return NULL;
+}
+
+void *writer(void *arg) {
+    int writer_id = *(int *)arg;
+
+    sem_wait(&resource); 
+    shared_data += 10;
+    printf("Writer %d: Updated shared data to %d\n", writer_id, shared_data);
+
+    sem_post(&resource); 
+
+    return NULL;
+}
+
+int main() {
+    pthread_t readers[5], writers[2];
+    int reader_ids[5], writer_ids[2];
+
+    sem_init(&resource, 0, 1);
+    sem_init(&read_count_access, 0, 1);
+
+    for (int i = 0; i < 5; i++) {
+        reader_ids[i] = i + 1;
+        pthread_create(&readers[i], NULL, reader, &reader_ids[i]);
+    }
+
+    for (int i = 0; i < 2; i++) {
+        writer_ids[i] = i + 1;
+        pthread_create(&writers[i], NULL, writer, &writer_ids[i]);
+    }
+
+    for (int i = 0; i < 5; i++) {
+        pthread_join(readers[i], NULL);
+    }
+    for (int i = 0; i < 2; i++) {
+        pthread_join(writers[i], NULL);
+    }
+
+    sem_destroy(&resource);
+    sem_destroy(&read_count_access);
+
+    return 0;
+}
+
+
+output:
+Writer 1: Updated shared data to 10
+Reader 1: Read shared data = 10
+Reader 2: Read shared data = 10
+Writer 2: Updated shared data to 20
+Reader 3: Read shared data = 20
+Reader 4: Read shared data = 20
+Reader 5: Read shared data = 20
