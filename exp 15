@@ -1,29 +1,176 @@
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
 #include <string.h>
 
-void createDirectory(const char *dirName) {
-    if (mkdir(dirName, 0777) == -1) {
-        perror("Error creating directory");
-    } else {
-        printf("Directory created: %s\n", dirName);
+#define MAX_USERS 10
+#define MAX_FILES 10
+
+typedef struct {
+    char fileName[100];
+} File;
+
+typedef struct {
+    char userName[100];
+    File files[MAX_FILES];
+    int fileCount;
+} UserDirectory;
+
+UserDirectory directories[MAX_USERS];
+int userCount = 0;
+
+void createUser() {
+    if (userCount >= MAX_USERS) {
+        printf("Maximum user directories reached. Cannot create more users.\n");
+        return;
+    }
+
+    char userName[100];
+    printf("Enter the name of the user: ");
+    scanf("%s", userName);
+
+    for (int i = 0; i < userCount; i++) {
+        if (strcmp(directories[i].userName, userName) == 0) {
+            printf("User \"%s\" already exists.\n", userName);
+            return;
+        }
+    }
+
+    strcpy(directories[userCount].userName, userName);
+    directories[userCount].fileCount = 0;
+    userCount++;
+    printf("User \"%s\" created successfully.\n", userName);
+}
+
+void createFile() {
+    char userName[100], fileName[100];
+    printf("Enter the user name: ");
+    scanf("%s", userName);
+
+    int userIndex = -1;
+    for (int i = 0; i < userCount; i++) {
+        if (strcmp(directories[i].userName, userName) == 0) {
+            userIndex = i;
+            break;
+        }
+    }
+
+    if (userIndex == -1) {
+        printf("User \"%s\" does not exist.\n", userName);
+        return;
+    }
+
+    if (directories[userIndex].fileCount >= MAX_FILES) {
+        printf("User \"%s\"'s directory is full. Cannot create more files.\n", userName);
+        return;
+    }
+
+    printf("Enter the file name: ");
+    scanf("%s", fileName);
+
+    for (int i = 0; i < directories[userIndex].fileCount; i++) {
+        if (strcmp(directories[userIndex].files[i].fileName, fileName) == 0) {
+            printf("File \"%s\" already exists in user \"%s\"'s directory.\n", fileName, userName);
+            return;
+        }
+    }
+
+    strcpy(directories[userIndex].files[directories[userIndex].fileCount].fileName, fileName);
+    directories[userIndex].fileCount++;
+    printf("File \"%s\" created successfully under user \"%s\".\n", fileName, userName);
+}
+
+void listFiles() {
+    char userName[100];
+    printf("Enter the user name: ");
+    scanf("%s", userName);
+
+    int userIndex = -1;
+    for (int i = 0; i < userCount; i++) {
+        if (strcmp(directories[i].userName, userName) == 0) {
+            userIndex = i;
+            break;
+        }
+    }
+
+    if (userIndex == -1) {
+        printf("User \"%s\" does not exist.\n", userName);
+        return;
+    }
+
+    if (directories[userIndex].fileCount == 0) {
+        printf("No files in user \"%s\"'s directory.\n", userName);
+        return;
+    }
+
+    printf("Files in user \"%s\"'s directory:\n", userName);
+    for (int i = 0; i < directories[userIndex].fileCount; i++) {
+        printf("%d. %s\n", i + 1, directories[userIndex].files[i].fileName);
     }
 }
 
 int main() {
-    const char *mainDir = "MainDirectory";
-    const char *subDir1 = "MainDirectory/SubDirectory1";
-    const char *subDir2 = "MainDirectory/SubDirectory2";
+    int choice;
 
-    createDirectory(mainDir);
-    createDirectory(subDir1);
-    createDirectory(subDir2);
+    do {
+        printf("\nTwo-Level Directory Management\n");
+        printf("1. Create User\n");
+        printf("2. Create File\n");
+        printf("3. List Files\n");
+        printf("4. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
+
+        switch (choice) {
+            case 1:
+                createUser();
+                break;
+            case 2:
+                createFile();
+                break;
+            case 3:
+                listFiles();
+                break;
+            case 4:
+                printf("Exiting the program.\n");
+                break;
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    } while (choice != 4);
 
     return 0;
 }
 
+
+input:
+Two-Level Directory Management
+1. Create User
+2. Create File
+3. List Files
+4. Exit
+Enter your choice: 1
+Enter the name of the user: Alice
+
+Enter your choice: 1
+Enter the name of the user: Bob
+
+Enter your choice: 2
+Enter the user name: Alice
+Enter the file name: file1.txt
+
+Enter your choice: 2
+Enter the user name: Alice
+Enter the file name: file2.txt
+
+Enter your choice: 3
+Enter the user name: Alice
+
+
 output:
-Error creating directory: Permission denied
-Error creating directory: No such file or directory
-Error creating directory: No such file or directory
+User "Alice" created successfully.
+User "Bob" created successfully.
+File "file1.txt" created successfully under user "Alice".
+File "file2.txt" created successfully under user "Alice".
+
+Files in user "Alice"'s directory:
+1. file1.txt
+2. file2.txt
