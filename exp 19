@@ -1,0 +1,64 @@
+#include <stdlib.h>
+#include <pthread.h>
+#include <unistd.h>
+
+int counter = 0;
+
+pthread_mutex_t mutex;
+
+void *incrementCounter(void *arg) {
+    int thread_id = *(int *)arg;
+
+    for (int i = 0; i < 5; i++) {
+      
+        pthread_mutex_lock(&mutex);
+
+        int temp = counter;
+        printf("Thread %d: Counter before increment = %d\n", thread_id, temp);
+        counter = temp + 1;
+        printf("Thread %d: Counter after increment = %d\n", thread_id, counter);
+
+        pthread_mutex_unlock(&mutex);
+
+        usleep(100000);
+    }
+
+    return NULL;
+}
+
+int main() {
+    pthread_t threads[3];
+    int thread_ids[3];
+
+    pthread_mutex_init(&mutex, NULL);
+
+    for (int i = 0; i < 3; i++) {
+        thread_ids[i] = i + 1;
+        pthread_create(&threads[i], NULL, incrementCounter, &thread_ids[i]);
+    }
+
+    for (int i = 0; i < 3; i++) {
+        pthread_join(threads[i], NULL);
+    }
+
+    pthread_mutex_destroy(&mutex);
+
+    printf("Final Counter Value: %d\n", counter);
+    return 0;
+}
+
+
+output:
+Thread 1: Counter before increment = 0
+Thread 1: Counter after increment = 1
+Thread 2: Counter before increment = 1
+Thread 2: Counter after increment = 2
+Thread 3: Counter before increment = 2
+Thread 3: Counter after increment = 3
+Thread 1: Counter before increment = 3
+Thread 1: Counter after increment = 4
+Thread 2: Counter before increment = 4
+Thread 2: Counter after increment = 5
+Thread 3: Counter before increment = 5
+Thread 3: Counter after increment = 6
+Final Counter Value: 15
