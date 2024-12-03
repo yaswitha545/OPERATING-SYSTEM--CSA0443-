@@ -2,45 +2,149 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_EMPLOYEES 100
-#define NAME_LENGTH 50
-
 typedef struct {
     int id;
-    char name[NAME_LENGTH];
+    char name[50];
     float salary;
 } Employee;
 
-void writeEmployee(FILE *file, Employee emp, int index) {
-    fseek(file, index * sizeof(Employee), SEEK_SET);
+void addEmployee(FILE *file) {
+    Employee emp;
+    printf("Enter Employee ID: ");
+    scanf("%d", &emp.id);
+    printf("Enter Employee Name: ");
+    scanf("%s", emp.name);
+    printf("Enter Employee Salary: ");
+    scanf("%f", &emp.salary);
+
+    fseek(file, (emp.id - 1) * sizeof(Employee), SEEK_SET);
     fwrite(&emp, sizeof(Employee), 1, file);
+    printf("Employee record added successfully.\n");
 }
 
-void readEmployee(FILE *file, Employee *emp, int index) {
-    fseek(file, index * sizeof(Employee), SEEK_SET);
-    fread(emp, sizeof(Employee), 1, file);
+void displayEmployee(FILE *file) {
+    int id;
+    Employee emp;
+    printf("Enter Employee ID to display: ");
+    scanf("%d", &id);
+
+    fseek(file, (id - 1) * sizeof(Employee), SEEK_SET);
+    fread(&emp, sizeof(Employee), 1, file);
+
+    if (emp.id == id) {
+        printf("\nEmployee Details:\n");
+        printf("ID: %d\n", emp.id);
+        printf("Name: %s\n", emp.name);
+        printf("Salary: %.2f\n", emp.salary);
+    } else {
+        printf("Employee with ID %d not found.\n", id);
+    }
+}
+
+void updateEmployee(FILE *file) {
+    int id;
+    Employee emp;
+    printf("Enter Employee ID to update: ");
+    scanf("%d", &id);
+
+    fseek(file, (id - 1) * sizeof(Employee), SEEK_SET);
+    fread(&emp, sizeof(Employee), 1, file);
+
+    if (emp.id == id) {
+        printf("Enter new Employee Name: ");
+        scanf("%s", emp.name);
+        printf("Enter new Employee Salary: ");
+        scanf("%f", &emp.salary);
+
+        fseek(file, (id - 1) * sizeof(Employee), SEEK_SET);
+        fwrite(&emp, sizeof(Employee), 1, file);
+        printf("Employee record updated successfully.\n");
+    } else {
+        printf("Employee with ID %d not found.\n", id);
+    }
+}
+
+void listEmployees(FILE *file) {
+    Employee emp;
+    int count = 0;
+
+    printf("\nEmployee List:\n");
+    rewind(file); 
+    while (fread(&emp, sizeof(Employee), 1, file)) {
+        if (emp.id != 0) { 
+            printf("ID: %d, Name: %s, Salary: %.2f\n", emp.id, emp.name, emp.salary);
+            count++;
+        }
+    }
+
+    if (count == 0) {
+        printf("No employee records found.\n");
+    }
 }
 
 int main() {
-    FILE *file = fopen("employees.dat", "wb+");
-    if (!file) {
-        perror("Unable to open file");
-        return EXIT_FAILURE;
+    FILE *file;
+    int choice;
+
+    file = fopen("employees.dat", "rb+");
+    if (file == NULL) {
+       
+        file = fopen("employees.dat", "wb+");
+        if (file == NULL) {
+            printf("Error opening file.\n");
+            exit(1);
+        }
     }
 
-    Employee emp1 = {1, "John Doe", 50000.0};
-    Employee emp2 = {2, "Jane Smith", 60000.0};
+    do {
+        printf("\nEmployee Management System\n");
+        printf("1. Add Employee\n");
+        printf("2. Display Employee\n");
+        printf("3. Update Employee\n");
+        printf("4. List All Employees\n");
+        printf("5. Exit\n");
+        printf("Enter your choice: ");
+        scanf("%d", &choice);
 
-    writeEmployee(file, emp1, 0);
-    writeEmployee(file, emp2, 1);
-
-    Employee readEmp;
-    readEmployee(file, &readEmp, 0);
-    printf("Employee ID: %d, Name: %s, Salary: %.2f\n", readEmp.id, readEmp.name, readEmp.salary);
+        switch (choice) {
+            case 1:
+                addEmployee(file);
+                break;
+            case 2:
+                displayEmployee(file);
+                break;
+            case 3:
+                updateEmployee(file);
+                break;
+            case 4:
+                listEmployees(file);
+                break;
+            case 5:
+                printf("Exiting the program.\n");
+                break;
+            default:
+                printf("Invalid choice. Please try again.\n");
+        }
+    } while (choice != 5);
 
     fclose(file);
-    return EXIT_SUCCESS;
+    return 0;
 }
 
+input:
+Employee Management System
+1. Add Employee
+2. Display Employee
+3. Update Employee
+4. List All Employees
+5. Exit
+Enter your choice: 1
+Enter Employee ID: 1
+Enter Employee Name: Alice
+Enter Employee Salary: 50000
+Enter your choice: 4
+
 output:
-Unable to open file: Permission denied
+Employee record added successfully.
+Employee List:
+ID: 1, Name: Alice, Salary: 50000.00
