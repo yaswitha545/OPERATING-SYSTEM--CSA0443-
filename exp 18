@@ -2,66 +2,74 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <unistd.h>
 
 #define BUFFER_SIZE 5
-int buffer[BUFFER_SIZE];
-int count = 0;
 
-sem_t empty;
-sem_t full;
+int buffer[BUFFER_SIZE];
+int in = 0, out = 0; 
+sem_t empty; 
+sem_t full; 
 pthread_mutex_t mutex;
 
-void* producer(void* arg) {
+void *producer(void *arg) {
+    int item;
     for (int i = 0; i < 10; i++) {
-        sem_wait(&empty);
-        pthread_mutex_lock(&mutex);
-        
-        buffer[count++] = i;
-        printf("Produced: %d\n", i);
-        
-        pthread_mutex_unlock(&mutex);
-        sem_post(&full);
-        sleep(1);
+        item = rand() % 100; 
+        sem_wait(&empty); 
+        pthread_mutex_lock(&mutex); 
+
+        buffer[in] = item;
+        printf("Producer produced: %d\n", item);
+        in = (in + 1) % BUFFER_SIZE;
+
+        pthread_mutex_unlock(&mutex); 
+        sem_post(&full); 
     }
     return NULL;
 }
 
-void* consumer(void* arg) {
+void *consumer(void *arg) {
+    int item;
     for (int i = 0; i < 10; i++) {
-        sem_wait(&full);
-        pthread_mutex_lock(&mutex);
-        
-        int item = buffer[--count];
-        printf("Consumed: %d\n", item);
-        
-        pthread_mutex_unlock(&mutex);
+        sem_wait(&full); 
+        pthread_mutex_lock(&mutex); 
+        item = buffer[out];
+        printf("Consumer consumed: %d\n", item);
+        out = (out + 1) % BUFFER_SIZE;
+
+        pthread_mutex_unlock(&mutex); 
         sem_post(&empty);
-        sleep(1);
     }
     return NULL;
 }
 
 int main() {
-    pthread_t prod, cons;
-    sem_init(&empty, 0, BUFFER_SIZE);
-    sem_init(&full, 0, 0);
+    pthread_t producerThread, consumerThread;
+
+    sem_init(&empty, 0, BUFFER_SIZE); 
+    sem_init(&full, 0, 0);           
     pthread_mutex_init(&mutex, NULL);
 
-    pthread_create(&prod, NULL, producer, NULL);
-    pthread_create(&cons, NULL, consumer, NULL);
+    pthread_create(&producerThread, NULL, producer, NULL);
+    pthread_create(&consumerThread, NULL, consumer, NULL);
 
-    pthread_join(prod, NULL);
-    pthread_join(cons, NULL);
+    pthread_join(producerThread, NULL);
+    pthread_join(consumerThread, NULL);
 
     sem_destroy(&empty);
     sem_destroy(&full);
     pthread_mutex_destroy(&mutex);
+
     return 0;
 }
-
 output:
-produced:1
-consumed:1
-produced:2
-consumed:2
+Producer produced: 45
+Producer produced: 12
+Consumer consumed: 45
+Producer produced: 78
+Consumer consumed: 12
+Consumer consumed: 78
+Producer produced: 64
+Producer produced: 90
+Consumer consumed: 64
+Consumer consumed: 90
