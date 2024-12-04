@@ -1,43 +1,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <sys/ipc.h>
-#include <sys/shm.h>
-
-#define SHM_SIZE 1024 
-
+#include <sys/msg.h>
+#include <unistd.h>
+#define MAX_TEXT 512
+struct message {
+    long msg_type;
+    char text[MAX_TEXT];
+};
 int main() {
-	         key_t key = ftok("shmfile", 65);
-    if (key == -1) {
-    	        perror("ftok");
-        exit(EXIT_FAILURE);
+    key_t key = ftok("progfile", 65);
+    int msgid = msgget(key, 0666 | IPC_CREAT);
+    struct message msg;
+    msg.msg_type = 1;
+    strcpy(msg.text, "Type 1: Hello from Process 1!");
+    msgsnd(msgid, &msg, sizeof(msg), 0);
+    msg.msg_type = 2;
+    strcpy(msg.text, "Type 2: Another message from Process 1!");
+    msgsnd(msgid, &msg, sizeof(msg), 0);
+    for (int i = 1; i <= 2; i++) {
+        msgrcv(msgid, &msg, sizeof(msg), i, 0);
+        printf("Process 2: Received message of type %ld: %s\n", msg.msg_type, msg.text);
     }
-     int shmid = shmget(key, SHM_SIZE, IPC_CREAT | 0666);
-    if (shmid == -1) {
-    	 perror("shmget");
-        exit(EXIT_FAILURE);
-    }
-    char *shm_ptr = (char *)shmat(shmid, NULL, 0);
-    if (shm_ptr == (char *)(-1)) {
-    	 perror("shmat");
-        exit(EXIT_FAILURE);
-    }
-    strcpy(shm_ptr, "Hello, shared memory!");
-    
-     printf("Data written to shared memory: %s\n", shm_ptr);
-     
-    if (shmdt(shm_ptr) == -1) {
-    	perror("shmdt");
-        exit(EXIT_FAILURE);
-    }
-    if (shmctl(shmid, IPC_RMID, NULL) == -1) {
-        perror("shmctl");
-        exit(EXIT_FAILURE);
-    }
-    
+    msgctl(msgid, IPC_RMID, NULL);
     return 0;
 }
-
 output:
-data return to shared memory: Hello, shared memory!
+Process 2: Received message of type 1: Type 1: Hello from Process 1!
+Process 2: Received message of type 2: Type 2: Another message from Process 1!
