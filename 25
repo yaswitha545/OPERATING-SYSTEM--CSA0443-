@@ -1,0 +1,81 @@
+#include <stdio.h>
+#include <fcntl.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <errno.h>
+#include <string.h>
+void print_file_info(const char *filename) {
+    struct stat fileStat;
+    if (stat(filename, &fileStat) < 0) {
+        perror("Error getting file stats");
+        return;
+    }
+    printf("File: %s\n", filename);
+    printf("Size: %ld bytes\n", fileStat.st_size);
+    printf("Permissions: %o\n", fileStat.st_mode & 0777);
+    printf("Last modified: %ld\n\n", fileStat.st_mtime);
+}
+void list_directory(const char *dirname) {
+    DIR *dir;
+    struct dirent *entry;
+
+    if ((dir = opendir(dirname)) == NULL) {
+        perror("Error opening directory");
+        return;
+    }
+    printf("Directory: %s\n", dirname);
+    while ((entry = readdir(dir)) != NULL) {
+        printf("%s\n", entry->d_name);
+    }
+    closedir(dir);
+    printf("\n");
+}
+int main() {
+    int fd;
+    char buffer[100];
+    fd = open("example.txt", O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+    if (fd == -1) {
+        perror("Error opening file");
+        return 1;
+    }
+    const char *text = "Hello, UNIX system calls!";
+    if (write(fd, text, strlen(text)) == -1) {
+        perror("Error writing to file");
+        close(fd);
+        return 1;
+    }
+    if (lseek(fd, 0, SEEK_SET) == -1) {
+        perror("Error seeking in file");
+        close(fd);
+        return 1;
+    }
+    ssize_t bytes = read(fd, buffer, sizeof(buffer) - 1);
+    if (bytes == -1) {
+        perror("Error reading from file");
+        close(fd);
+        return 1;
+    }
+    buffer[bytes] = '\0';  
+    printf("Read from file: %s\n", buffer);
+    int flags = fcntl(fd, F_GETFL);
+    if (flags == -1) {
+        perror("Error getting file descriptor flags");
+        close(fd);
+        return 1;
+    }
+    flags |= O_APPEND;
+    if (fcntl(fd, F_SETFL, flags) == -1) {
+        perror("Error setting file descriptor flags");
+        close(fd);
+        return 1;
+    }
+    print_file_info("example.txt");
+    if (close(fd) == -1) {
+        perror("Error closing file");
+        return 1;
+    }
+    list_directory(".");
+
+    return 0;
+}
