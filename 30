@@ -1,0 +1,15 @@
+#include <stdio.h>
+#include <pthread.h>
+void* myThreadFun(void* vargp) {
+    long id = (long)vargp;  
+    printf("Thread %ld: Hello, World!\n", id);
+    return NULL;
+}
+int main() {
+    pthread_t thread_id;
+    long t = 1;
+    pthread_create(&thread_id, NULL, myThreadFun, (void*)t);
+    pthread_join(thread_id, NULL);
+    printf("Thread has finished execution.\n");
+    return 0;
+}
