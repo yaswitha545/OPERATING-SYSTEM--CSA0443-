@@ -1,0 +1,41 @@
+#include <stdio.h>
+#define MEMORY_SIZE 5  
+#define PROCESS_COUNT 4  
+void worstFit(int blockSize[], int m, int processSize[], int n) {
+    int allocation[n];
+    for (int i = 0; i < n; i++)
+        allocation[i] = -1;
+    for (int i = 0; i < n; i++) {
+        int worstIdx = -1;
+        for (int j = 0; j < m; j++) {
+            if (blockSize[j] >= processSize[i]) {
+                if (worstIdx == -1 || blockSize[j] > blockSize[worstIdx])
+                    worstIdx = j;
+            }
+        }
+        if (worstIdx != -1) {
+            allocation[i] = worstIdx;
+            blockSize[worstIdx] -= processSize[i];
+        }
+    }
+    printf("\nProcess No.\tProcess Size\tBlock No.\n");
+    for (int i = 0; i < n; i++) {
+        printf(" %d\t\t%d\t\t", i + 1, processSize[i]);
+        if (allocation[i] != -1)
+            printf("%d\n", allocation[i] + 1);
+        else
+            printf("Not Allocated\n");
+    }
+}
+int main() {
+    int blockSize[MEMORY_SIZE] = {100, 500, 200, 300, 600};  
+    int processSize[PROCESS_COUNT] = {212, 417, 112, 426};  
+    printf("Memory Blocks: ");
+    for (int i = 0; i < MEMORY_SIZE; i++)
+        printf("%d ", blockSize[i]);
+    printf("\nProcesses: ");
+    for (int i = 0; i < PROCESS_COUNT; i++)
+        printf("%d ", processSize[i]);
+    worstFit(blockSize, MEMORY_SIZE, processSize, PROCESS_COUNT);
+    return 0;
+}
